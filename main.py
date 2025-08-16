@@ -1,10 +1,11 @@
-import os
 import asyncio
 from aiogram import Bot, Dispatcher, types
 import subprocess
 
-TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN")
-TG_CHAT_ID = os.getenv("TG_CHAT_ID")  # Куда бот отправляет уведомления
+# Вставляем токены и коды прямо в код
+TG_BOT_TOKEN = "7993918264:AAHx8L3O0o5d12Q1AwcuQaHixKNswEoP-lQ"
+TWITCH_CLIENT_ID = "sxxpr6b2drzk1ktly3bijanamzvftx"
+TWITCH_CLIENT_SECRET = "oibclvhot1lemnbvnbjj0m90861bjt"
 
 subscribed_streamers = []
 
@@ -13,12 +14,11 @@ dp = Dispatcher(bot)
 
 async def download_stream(streamer: str):
     filename = f"{streamer}.mp4"
-    # Записываем стрим через streamlink в 720p
     cmd = ["streamlink", f"https://twitch.tv/{streamer}", "720p", "-o", filename]
     subprocess.run(cmd)
     await bot.send_message(chat_id=TG_CHAT_ID, text=f"Запись стрима {streamer} завершена!")
 
-@dp.message(commands=["sub"])
+@dp.message_handler(commands=["sub"])
 async def subscribe(message: types.Message):
     args = message.get_args()
     if not args:
@@ -28,12 +28,11 @@ async def subscribe(message: types.Message):
     if streamer not in subscribed_streamers:
         subscribed_streamers.append(streamer)
         await message.answer(f"Подписка на {streamer} активирована!")
-        # Запуск записи в фоне
         asyncio.create_task(download_stream(streamer))
     else:
         await message.answer(f"Вы уже подписаны на {streamer}!")
 
-@dp.message(commands=["list"])
+@dp.message_handler(commands=["list"])
 async def list_subs(message: types.Message):
     if subscribed_streamers:
         await message.answer("Подписки:\n" + "\n".join(subscribed_streamers))
